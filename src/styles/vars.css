@@ -1,0 +1,11 @@
+:root {
+  --light-gray: rgb(189, 189, 189);
+  --dark-gray: rgb(33, 33, 33);
+  --control-width: 300px;
+  --control-height: 25px;
+  --control-active-span: 0.5s;
+  --control-visible-span: 0.8s;
+
+  --swift-enter: cubic-bezier(0.65, 0, 0.05, 1);
+  --swift-exit: cubic-bezier(0.65, 0, 0.1, 1);
+}

@@ -1,0 +1,82 @@
+.SliderView {
+  position: relative;
+  width: var(--control-width);
+  height: var(--control-height);
+  pointer-events: none;
+
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: opacity var(--swift-exit) var(--control-visible-span), transform var(--swift-exit) var(--control-visible-span);
+}
+
+.SliderView.visible {
+  pointer-events: all;
+  transform: translateY(0);
+  opacity: 1;
+  transition: opacity var(--swift-enter) var(--control-visible-span), transform var(--swift-enter) var(--control-visible-span);
+}
+
+.SliderView.inactive {
+  pointer-events: none;
+}
+
+.SliderView .bar {
+  position: relative;
+  top: calc(var(--control-height) / 2);
+  left: calc(var(--control-height) / 2);
+  width: calc(var(--control-width) - var(--control-height));
+  height: 1px;
+}
+
+.SliderView .bar .base {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: var(--light-gray);
+}
+
+.SliderView .bar .fill {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  transition: background-color var(--control-active-span) var(--swift-exit);
+}
+
+.SliderView:not(.touch):hover .bar .fill,
+.SliderView.dragged .bar .fill {
+  transition: background-color var(--control-active-span) var(--swift-enter);
+  background-color: var(--dark-gray);
+}
+
+.SliderView .bar-hit-area {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.SliderView .knob {
+  box-sizing: border-box;
+  position: absolute;
+  width: var(--control-height);
+  height: var(--control-height);
+  border: 1px solid var(--light-gray);
+  border-radius: 100%;
+  background-color: white;
+
+  outline: 0;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.SliderView.visible .knob {
+  cursor: pointer;
+  transition: border-color var(--swift-exit) var(--control-active-span);
+}
+
+.SliderView:not(.touch):hover .knob,
+.SliderView.dragged .knob {
+  transition: border-color var(--swift-enter) var(--control-active-span);
+
+  border-color: var(--dark-gray);
+}

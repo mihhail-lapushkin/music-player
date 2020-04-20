@@ -1,0 +1,16 @@
+.PlayerView {
+  width: 400px;
+  height: 400px;
+
+  outline: 0;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.PlayerView.hidden {
+  visibility: hidden;
+}
+
+.PlayerView.pointer-cursor {
+  cursor: pointer;
+}

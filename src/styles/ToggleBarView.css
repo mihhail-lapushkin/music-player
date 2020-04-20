@@ -1,0 +1,48 @@
+.ToggleBarView {
+  display: flex;
+  justify-content: space-between;
+  width: var(--control-width);
+  height: var(--control-height);
+  pointer-events: none;
+
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: opacity var(--swift-exit) var(--control-visible-span), transform var(--swift-exit) var(--control-visible-span);
+}
+
+.ToggleBarView.visible {
+  pointer-events: all;
+  transform: translateY(0);
+  opacity: 1;
+  transition: opacity var(--swift-enter) var(--control-visible-span), transform var(--swift-enter) var(--control-visible-span);
+}
+
+.ToggleBarView button {
+  width: var(--control-height);
+  height: var(--control-height);
+  box-sizing: border-box;
+  border: 1px solid var(--light-gray);
+  border-radius: 100%;
+  background-color: white;
+  font-family: system-ui, Arial;
+  font-size: 11px;
+  color: var(--light-gray);
+  padding: 0;
+
+  outline: 0;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ToggleBarView.visible button {
+  cursor: pointer;
+  transition: border-color var(--swift-exit) var(--control-active-span), color var(--swift-exit) var(--control-active-span);
+}
+
+.ToggleBarView:not(.touch) button:hover,
+.ToggleBarView button.active {
+  transition: border-color var(--swift-enter) var(--control-active-span), color var(--swift-enter) var(--control-active-span);
+
+  color: var(--dark-gray);
+  border-color: var(--dark-gray);
+}
