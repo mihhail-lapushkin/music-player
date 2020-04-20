@@ -40,13 +40,11 @@ export default class PlayerView {
     baseImage.src = `${window.musicPlayer_resourcesRoot || ''}base.jpg`;
     baseImage.addEventListener('load', () => {
       this.baseImageFill = this.canvasContext.createPattern(baseImage, 'no-repeat');
-      this.handleImageLoad();
     });
     const topImage = new Image();
     topImage.src = `${window.musicPlayer_resourcesRoot || ''}top.jpg`;
     topImage.addEventListener('load', () => {
       this.topImageFill = this.canvasContext.createPattern(topImage, 'no-repeat');
-      this.handleImageLoad();
     });
 
     this.canvasElement.addEventListener('click', this.handleCanvasClick.bind(this));
@@ -65,12 +63,6 @@ export default class PlayerView {
 
   onPauseButtonPress(listener) {
     this.emitter.on('pause', listener);
-  }
-
-  handleImageLoad() {
-    if (this.baseImageFill && this.topImageFill) {
-      this.rootElement.classList.remove('hidden');
-    }
   }
 
   handleCanvasClick(e) {

@@ -7,10 +7,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.PlayerView.hidden {
-  visibility: hidden;
-}
-
 .PlayerView.pointer-cursor {
   cursor: pointer;
 }
