@@ -12,7 +12,7 @@ let frequenciesOrder;
 let playerUi;
 let positionSlider;
 let volumeSlider;
-let expandSpeedSlider;
+let playerAnimationSpeedSlider;
 let songToggleBar;
 let songIndex = 0;
 
@@ -21,27 +21,27 @@ export const init = () => {
   playerUi = new PlayerView('#player');
   positionSlider = new SliderView('#position-slider', 0);
   volumeSlider = new SliderView('#volume-slider', player.getVolume());
-  expandSpeedSlider = new SliderView('#expand-speed-slider', 1);
+  playerAnimationSpeedSlider = new SliderView('#player-animation-speed-slider', 1);
   songToggleBar = new ToggleBarView('#song-toggle-bar', songIndex);
 
   const updatePlayerVolumeFromSlider = () => {
     player.setVolume(volumeSlider.getPosition());
   };
 
-  const updateExpandSpeedFromSlider = () => {
-    playerUi.setExpandSpeed(1 / Math.max(0.01, expandSpeedSlider.getPosition()));
+  const updatePlayerAnimationSpeedFromSlider = () => {
+    playerUi.setAnimationSpeed(1 / Math.max(0.01, playerAnimationSpeedSlider.getPosition()));
   };
 
   playerUi.onPlayButtonPress(() => {
     if (!player.isPlaying()) {
       player.play();
-      [ positionSlider, volumeSlider, expandSpeedSlider, songToggleBar ].forEach(view => view.setVisible(true));
+      [ positionSlider, volumeSlider, playerAnimationSpeedSlider, songToggleBar ].forEach(view => view.setVisible(true));
     }
   });
   playerUi.onPauseButtonPress(() => {
     if (player.isPlaying()) {
       player.pause();
-      [ positionSlider, volumeSlider, expandSpeedSlider, songToggleBar ].forEach(view => view.setVisible(false));
+      [ positionSlider, volumeSlider, playerAnimationSpeedSlider, songToggleBar ].forEach(view => view.setVisible(false));
     }
   });
 
@@ -60,8 +60,8 @@ export const init = () => {
   volumeSlider.onDragProgress(updatePlayerVolumeFromSlider);
   volumeSlider.onJump(updatePlayerVolumeFromSlider);
 
-  expandSpeedSlider.onDragProgress(updateExpandSpeedFromSlider);
-  expandSpeedSlider.onJump(updateExpandSpeedFromSlider);
+  playerAnimationSpeedSlider.onDragProgress(updatePlayerAnimationSpeedFromSlider);
+  playerAnimationSpeedSlider.onJump(updatePlayerAnimationSpeedFromSlider);
 
   songToggleBar.onButtonClick(index => {
     songIndex = index;
@@ -82,6 +82,10 @@ export const init = () => {
       document.querySelector('#viewport').classList.remove('hidden');
     });
   });
+
+  setTimeout(() => {
+    document.querySelector('#viewport').classList.add('animate-opacity');
+  }, 100);
 
   frequenciesOrder = shuffle(range(player.getFrequencyData().length));
 

@@ -7,8 +7,7 @@ let audioContext;
 let audioNode;
 let gainNode;
 let analyserNode;
-let byteFrequencyData;
-let byteTimeDomainData;
+let frequencyData;
 let audioBuffer;
 let volume = 1.0;
 let fadeVolume = { value: 1.0 };
@@ -16,9 +15,30 @@ let fadeVolumeTween;
 let playTime;
 let pauseTime = 0;
 
+const newAudioContext = () => {
+  const context = new (window.AudioContext || window.webkitAudioContext)();
+
+  context.createGain = context.createGain || context.createGainNode;
+  context.createDelay = context.createDelay || context.createDelayNode;
+  context.createScriptProcessor = context.createScriptProcessor || context.createJavaScriptNode;
+
+  const originalCreateBufferSource = context.createBufferSource;
+
+  context.createBufferSource = function() {
+    const source = originalCreateBufferSource.apply(this, arguments);
+
+    source.start = source.start || source.noteOn;
+    source.stop = source.stop || source.noteOff;
+
+    return source;
+  }
+
+  return context;
+};
+
 export const init = () => {
   emitter = new EventEmitter();
-  audioContext = new AudioContext();
+  audioContext = newAudioContext();
   gainNode = audioContext.createGain();
   analyserNode = audioContext.createAnalyser();
   analyserNode.minDecibels = -170;
@@ -29,8 +49,7 @@ export const init = () => {
   gainNode.connect(analyserNode);
   analyserNode.connect(audioContext.destination);
 
-  byteFrequencyData = new Uint8Array(analyserNode.fftSize / 2);
-  byteTimeDomainData = new Uint8Array(analyserNode.fftSize / 2);
+  frequencyData = new Uint8Array(analyserNode.fftSize / 2);
 };
 
 export const onPlayProgress = listener => emitter.on('play.progress', listener);
@@ -38,18 +57,10 @@ export const onPlayEnd      = listener => emitter.on('play.done', listener);
 
 export const getFrequencyData = () => {
   if (audioNode) {
-    analyserNode.getByteFrequencyData(byteFrequencyData);
+    analyserNode.getByteFrequencyData(frequencyData);
   }
 
-  return byteFrequencyData;
-};
-
-export const getTimeDomainData = () => {
-  if (audioNode) {
-    analyserNode.getByteTimeDomainData(byteTimeDomainData)
-  }
-
-  return byteTimeDomainData;
+  return frequencyData;
 };
 
 export const getPosition = () => {

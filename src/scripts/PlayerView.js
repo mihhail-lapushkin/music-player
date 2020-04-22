@@ -6,13 +6,21 @@ import _ from 'lodash';
 const gray = value => rgb(value, value, value);
 const rgb = (r, g, b) => 'rgb(' + Math.floor(r) + ',' + Math.floor(g) + ',' + Math.floor(b) + ')';
 
-const goldenRatio = (1 + Math.sqrt(5)) / 2;
 const swiftEnter = BezierEasing(0.65, 0, 0.05, 1);
 const swiftExit = BezierEasing(0.65, 0, 0.1, 1);
 
-const buttonCircleRadius = 0.1;
-const expandedRadius = 0.5;
-const halfExpandedRadius = expandedRadius / 2;
+const PI2 = Math.PI * 2;
+const HALF_PI = Math.PI / 2;
+const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
+const STROKE_COLOR = 189;
+const BUTTON_COLOR = 66;
+const BUTTON_HOVER_COLOR = 33;
+const FREQUENCY_DATA_MAX_VALUE = 256;
+const BUTTON_CIRCLE_RADIUS = 0.1;
+const EXPANDED_RADIUS = 0.5;
+const HALF_EXPANDED_RADIUS = EXPANDED_RADIUS / 2;
+const TWEEN_DURATION = 0.8;
+const BUTTON_TWEEN_DURATION = 0.5;
 
 export default class PlayerView {
 
@@ -25,12 +33,12 @@ export default class PlayerView {
     this.canvasSize = this.canvasElement.width = this.canvasElement.height = parseInt(window.getComputedStyle(this.rootElement).width);
     this.canvasCenter = this.canvasSize / 2;
 
-    this.expandSpeed = 1;
+    this.animationSpeed = 1;
     this.mouseOverButton = false;
     this.expanded = false;
     this.expandInterrupted = false;
     this.tweenedProps = {
-      buttonColor: 66,
+      buttonColor: BUTTON_COLOR,
       loadedPercent: 0,
       expandPercent: 0,
       buttonMorphPercent: 0
@@ -53,8 +61,8 @@ export default class PlayerView {
     this.canvasElement.addEventListener('mouseleave', this.handleMouseMove.bind(this));
   }
 
-  setExpandSpeed(value) {
-    this.expandSpeed = value;
+  setAnimationSpeed(value) {
+    this.animationSpeed = value;
   }
 
   onPlayButtonPress(listener) {
@@ -78,13 +86,13 @@ export default class PlayerView {
 
     gsap.to(this.tweenedProps, {
       expandPercent: this.expanded ? 0 : 1,
-      duration: 0.8 * this.expandSpeed,
+      duration: TWEEN_DURATION * this.animationSpeed,
       ease: this.expanded ? swiftExit : swiftEnter
     });
 
     this.buttonMorphTween = gsap.to(this.tweenedProps, {
       buttonMorphPercent: this.expanded ? 0 : 1,
-      duration: 0.5 * this.expandSpeed,
+      duration: BUTTON_TWEEN_DURATION * this.animationSpeed,
       ease: this.expanded ? swiftExit : swiftEnter
     });
 
@@ -101,75 +109,67 @@ export default class PlayerView {
     const centerOffsetX = Math.abs(e.offsetX - this.canvasCenter);
     const centerOffsetY = Math.abs(e.offsetY - this.canvasCenter);
 
-    return Math.sqrt(centerOffsetX * centerOffsetX + centerOffsetY * centerOffsetY) <= buttonCircleRadius * this.canvasSize;
+    return Math.sqrt(centerOffsetX * centerOffsetX + centerOffsetY * centerOffsetY) <= BUTTON_CIRCLE_RADIUS * this.canvasSize;
   }
 
   handleMouseMove(e) {
-    if (this.isMouseInsideButton(e)) {
-      if (!this.mouseOverButton) {
-        this.mouseOverButton = true;
+    const mouseInside = this.isMouseInsideButton(e);
 
-        gsap.to(this.tweenedProps, {
-          duration: 0.5,
-          buttonColor: 33,
-          ease: swiftEnter
-        });
+    if (mouseInside === !this.mouseOverButton) {
+      this.mouseOverButton = mouseInside;
 
+      gsap.to(this.tweenedProps, {
+        duration: BUTTON_TWEEN_DURATION,
+        buttonColor: mouseInside ? BUTTON_HOVER_COLOR : BUTTON_COLOR,
+        ease: mouseInside ? swiftEnter : swiftExit
+      });
+
+      if (mouseInside) {
         this.rootElement.classList.add('pointer-cursor');
-      }
-    } else {
-      if (this.mouseOverButton) {
-        this.mouseOverButton = false;
-
-        gsap.to(this.tweenedProps, {
-          duration: 0.5,
-          buttonColor: 66,
-          ease: swiftExit
-        });
-
+      } else {
         this.rootElement.classList.remove('pointer-cursor');
       }
     }
   }
 
-  draw(frequencies) {
+  draw(frequencyData) {
     this.canvasContext.clearRect(0, 0, this.canvasSize, this.canvasSize);
     this.canvasContext.lineWidth = 1;
-    this.canvasContext.strokeStyle = gray(189);
+    this.canvasContext.strokeStyle = gray(STROKE_COLOR);
 
-    const currentRadiusPercent = buttonCircleRadius + (expandedRadius - buttonCircleRadius) * this.tweenedProps.expandPercent;
+    const currentRadiusPercent = BUTTON_CIRCLE_RADIUS + (EXPANDED_RADIUS - BUTTON_CIRCLE_RADIUS) * this.tweenedProps.expandPercent;
     const currentRadius = currentRadiusPercent * this.canvasSize;
-    const maxValuePercent = _.max(frequencies) / 256;
-    const maxAllowedPercent = currentRadiusPercent / halfExpandedRadius - 1;
+    const maxValuePercent = _.max(frequencyData) / FREQUENCY_DATA_MAX_VALUE;
+    const maxAllowedPercent = currentRadiusPercent / HALF_EXPANDED_RADIUS - 1;
 
-    this.canvasContext.fillStyle = currentRadiusPercent >= halfExpandedRadius / 2 ? this.baseImageFill : 'white';
+    this.canvasContext.fillStyle = currentRadiusPercent >= HALF_EXPANDED_RADIUS / 2 ? this.baseImageFill : 'white';
 
-    if (currentRadiusPercent < halfExpandedRadius) {
+    if (currentRadiusPercent < HALF_EXPANDED_RADIUS) {
       this.canvasContext.beginPath();
-      this.canvasContext.arc(this.canvasCenter, this.canvasCenter, currentRadius, 0, Math.PI * 2);
+      this.canvasContext.arc(this.canvasCenter, this.canvasCenter, currentRadius, 0, PI2);
       this.canvasContext.fill();
       this.canvasContext.stroke();
       this.canvasContext.closePath();
     }
 
-    if (currentRadiusPercent >= halfExpandedRadius) {
-      this.drawFrequencies(frequencies, maxValuePercent, maxAllowedPercent, 1);
+    if (currentRadiusPercent >= HALF_EXPANDED_RADIUS) {
+      this.drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent);
       this.canvasContext.fillStyle = this.topImageFill;
-      this.canvasContext.globalAlpha = Math.max((Math.pow(_.sum(frequencies) / (frequencies.length * 256) + 0.5, 4) - 0.5), 0);
-      this.drawFrequencies(frequencies, maxValuePercent, maxAllowedPercent, 1);
+      this.canvasContext.globalAlpha = Math.max((Math.pow(_.sum(frequencyData) / (frequencyData.length * FREQUENCY_DATA_MAX_VALUE) + 0.5, 4) - 0.5), 0);
+      this.drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent);
       this.canvasContext.globalAlpha = 1;
       this.canvasContext.stroke();
     }
 
     this.canvasContext.fillStyle = 'white';
 
-    if (currentRadiusPercent >= halfExpandedRadius / 2) {
+    if (currentRadiusPercent >= HALF_EXPANDED_RADIUS / 2) {
       this.canvasContext.beginPath();
 
-      frequencies.forEach((frequency, i) => {
-        const theta1 = Math.PI * 2 * i / frequencies.length;
-        const theta2 = Math.PI * 2 * (i + 1) / frequencies.length;
-        const radiusPercent = halfExpandedRadius * (1 + -0.5 * Math.max(frequency / 256, 2 - currentRadiusPercent / (halfExpandedRadius / 2)));
+      frequencyData.forEach((dataValue, i) => {
+        const theta1 = PI2 * i / frequencyData.length;
+        const theta2 = PI2 * (i + 1) / frequencyData.length;
+        const radiusPercent = HALF_EXPANDED_RADIUS * (1 + -0.5 * Math.max(dataValue / FREQUENCY_DATA_MAX_VALUE, 2 - currentRadiusPercent / (HALF_EXPANDED_RADIUS / 2)));
         const radius = Math.floor(radiusPercent * this.canvasSize);
 
         this.canvasContext.arc(this.canvasCenter, this.canvasCenter, radius, theta1, theta2);
@@ -183,13 +183,13 @@ export default class PlayerView {
     this.drawButton();
   }
 
-  drawFrequencies(frequencies, maxValuePercent, maxAllowedPercent, expandAmountAndDirection) {
+  drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent) {
     this.canvasContext.beginPath();
 
-    frequencies.forEach((frequency, i) => {
-      const theta1 = Math.PI * 2 * i / frequencies.length;
-      const theta2 = Math.PI * 2 * (i + 1) / frequencies.length;
-      const radiusPercent = halfExpandedRadius * (1 + expandAmountAndDirection * Math.min(frequency / 256, maxAllowedPercent * maxValuePercent));
+    frequencyData.forEach((dataValue, i) => {
+      const theta1 = PI2 * i / frequencyData.length;
+      const theta2 = PI2 * (i + 1) / frequencyData.length;
+      const radiusPercent = HALF_EXPANDED_RADIUS * (1 + Math.min(dataValue / FREQUENCY_DATA_MAX_VALUE, maxAllowedPercent * maxValuePercent));
       const radius = Math.floor(radiusPercent * this.canvasSize);
 
       this.canvasContext.arc(this.canvasCenter, this.canvasCenter, radius, theta1, theta2);
@@ -200,7 +200,7 @@ export default class PlayerView {
   }
 
   drawButton() {
-    const rotatedMatrix = rad => {
+    const getRotatedMatrix = rad => {
       const matrix = [1, 0, 0, 1, 0, 0];
     
       const c = Math.cos(rad);
@@ -219,31 +219,25 @@ export default class PlayerView {
       return matrix;
     };
 
-    let rotation;
-    const morphPercent = this.tweenedProps.buttonMorphPercent;
+    const getRotation = () => {
+      if (this.expanded && this.expandInterrupted || !this.expanded && !this.expandInterrupted) {
+        return getRotatedMatrix(HALF_PI * (4 - this.tweenedProps.buttonMorphPercent));
+      }
 
-    if (this.expanded) {
-      if (this.expandInterrupted) {
-        rotation = rotatedMatrix(Math.PI / 2 * (4 - morphPercent));
-      } else {
-        rotation = rotatedMatrix(Math.PI / 2 * morphPercent);
-      }
-    } else {
-      if (this.expandInterrupted) {
-        rotation = rotatedMatrix(Math.PI / 2 * morphPercent);
-      } else {
-        rotation = rotatedMatrix(Math.PI / 2 * (4 - morphPercent));
-      }
-    }
+      return getRotatedMatrix(HALF_PI * this.tweenedProps.buttonMorphPercent);
+    };
+
+    const rotation = getRotation();
+    const morphPercent = this.tweenedProps.buttonMorphPercent;
 
     this.canvasContext.setTransform(rotation[0], rotation[1], rotation[2], rotation[3], this.canvasCenter, this.canvasCenter);
     this.canvasContext.fillStyle = gray(this.tweenedProps.buttonColor);
 
-    const playButtonRadius = Math.floor(buttonCircleRadius / goldenRatio * this.canvasSize);
+    const playButtonRadius = Math.floor(BUTTON_CIRCLE_RADIUS / GOLDEN_RATIO * this.canvasSize);
     const x1 = -0.5 * playButtonRadius;
-    const y1 = Math.sin(-Math.PI * 2 / 3) * playButtonRadius;
+    const y1 = Math.sin(-PI2 / 3) * playButtonRadius;
     const x2 = -0.5 * playButtonRadius;
-    const y2 = Math.sin(Math.PI * 2 / 3) * playButtonRadius;
+    const y2 = Math.sin(PI2 / 3) * playButtonRadius;
     const x3 = 1 * playButtonRadius;
     const y3 = 0;
     const xd = morphPercent * playButtonRadius * 0.25;
