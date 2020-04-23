@@ -1,8 +1,8 @@
 :root {
   --light-gray: rgb(189, 189, 189);
   --dark-gray: rgb(33, 33, 33);
-  --control-width: 300px;
-  --control-height: 25px;
+  --control-width: 320px;
+  --control-height: 32px;
   --control-active-span: 0.5s;
   --control-visible-span: 0.8s;
 

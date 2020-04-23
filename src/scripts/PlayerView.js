@@ -26,6 +26,7 @@ export default class PlayerView {
 
   constructor(selector) {
     this.rootElement = document.querySelector(selector);
+    this.overlayElement = document.querySelector('.overlay');
     this.canvasElement = this.rootElement.querySelector('canvas');
     this.canvasContext = this.canvasElement.getContext('2d');
     this.emitter = new EventEmitter();
@@ -33,13 +34,14 @@ export default class PlayerView {
     this.canvasSize = this.canvasElement.width = this.canvasElement.height = parseInt(window.getComputedStyle(this.rootElement).width);
     this.canvasCenter = this.canvasSize / 2;
 
+    this.spinner = true;
     this.animationSpeed = 1;
     this.mouseOverButton = false;
     this.expanded = false;
     this.expandInterrupted = false;
     this.tweenedProps = {
       buttonColor: BUTTON_COLOR,
-      loadedPercent: 0,
+      spinnerPercent: 0,
       expandPercent: 0,
       buttonMorphPercent: 0
     };
@@ -55,6 +57,21 @@ export default class PlayerView {
       this.topImageFill = this.canvasContext.createPattern(topImage, 'no-repeat');
     });
 
+    const tweenSpinner = () => {
+      gsap.to(this.tweenedProps, {
+        spinnerPercent: 1,
+        duration: TWEEN_DURATION * 2,
+        ease: swiftEnter,
+        onComplete: () => {
+          if (this.spinner) {
+            this.tweenedProps.spinnerPercent = 0;
+            tweenSpinner();
+          }
+        }
+      });
+    };
+    tweenSpinner();
+
     this.canvasElement.addEventListener('click', this.handleCanvasClick.bind(this));
     this.canvasElement.addEventListener('mouseenter', this.handleMouseMove.bind(this));
     this.canvasElement.addEventListener('mousemove', this.handleMouseMove.bind(this));
@@ -63,6 +80,18 @@ export default class PlayerView {
 
   setAnimationSpeed(value) {
     this.animationSpeed = value;
+  }
+
+  setInactive(value) {
+    if (value) {
+      this.overlayElement.classList.remove('hidden');
+    } else {
+      this.overlayElement.classList.add('hidden');
+    }
+  }
+
+  setSpinner(value) {
+    this.spinner = value;
   }
 
   onPlayButtonPress(listener) {
@@ -134,8 +163,6 @@ export default class PlayerView {
 
   draw(frequencyData) {
     this.canvasContext.clearRect(0, 0, this.canvasSize, this.canvasSize);
-    this.canvasContext.lineWidth = 1;
-    this.canvasContext.strokeStyle = gray(STROKE_COLOR);
 
     const currentRadiusPercent = BUTTON_CIRCLE_RADIUS + (EXPANDED_RADIUS - BUTTON_CIRCLE_RADIUS) * this.tweenedProps.expandPercent;
     const currentRadius = currentRadiusPercent * this.canvasSize;
@@ -144,43 +171,66 @@ export default class PlayerView {
 
     this.canvasContext.fillStyle = currentRadiusPercent >= HALF_EXPANDED_RADIUS / 2 ? this.baseImageFill : 'white';
 
-    if (currentRadiusPercent < HALF_EXPANDED_RADIUS) {
+    if (this.spinner) {
+      this.canvasContext.lineWidth = 1;
+      this.canvasContext.strokeStyle = gray(STROKE_COLOR);
       this.canvasContext.beginPath();
       this.canvasContext.arc(this.canvasCenter, this.canvasCenter, currentRadius, 0, PI2);
       this.canvasContext.fill();
       this.canvasContext.stroke();
       this.canvasContext.closePath();
-    }
 
-    if (currentRadiusPercent >= HALF_EXPANDED_RADIUS) {
-      this.drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent);
-      this.canvasContext.fillStyle = this.topImageFill;
-      this.canvasContext.globalAlpha = Math.max((Math.pow(_.sum(frequencyData) / (frequencyData.length * FREQUENCY_DATA_MAX_VALUE) + 0.5, 4) - 0.5), 0);
-      this.drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent);
-      this.canvasContext.globalAlpha = 1;
-      this.canvasContext.stroke();
-    }
-
-    this.canvasContext.fillStyle = 'white';
-
-    if (currentRadiusPercent >= HALF_EXPANDED_RADIUS / 2) {
+      const spinnerLocation = -PI2 / 4 + PI2 * this.tweenedProps.spinnerPercent;
+      const spinnerSize = PI2 / 12;
+      this.canvasContext.lineWidth = 3;
+      this.canvasContext.strokeStyle = gray(BUTTON_COLOR);
       this.canvasContext.beginPath();
-
-      frequencyData.forEach((dataValue, i) => {
-        const theta1 = PI2 * i / frequencyData.length;
-        const theta2 = PI2 * (i + 1) / frequencyData.length;
-        const radiusPercent = HALF_EXPANDED_RADIUS * (1 + -0.5 * Math.max(dataValue / FREQUENCY_DATA_MAX_VALUE, 2 - currentRadiusPercent / (HALF_EXPANDED_RADIUS / 2)));
-        const radius = Math.floor(radiusPercent * this.canvasSize);
-
-        this.canvasContext.arc(this.canvasCenter, this.canvasCenter, radius, theta1, theta2);
-      });
-
-      this.canvasContext.closePath();
+      this.canvasContext.arc(this.canvasCenter, this.canvasCenter, currentRadius, spinnerLocation - spinnerSize / 2, spinnerLocation + spinnerSize / 2);
       this.canvasContext.fill();
       this.canvasContext.stroke();
-    }
+      this.canvasContext.closePath();
+    } else {
+      this.canvasContext.lineWidth = 1;
+      this.canvasContext.strokeStyle = gray(STROKE_COLOR);
 
-    this.drawButton();
+      if (currentRadiusPercent < HALF_EXPANDED_RADIUS) {
+        this.canvasContext.beginPath();
+        this.canvasContext.arc(this.canvasCenter, this.canvasCenter, currentRadius, 0, PI2);
+        this.canvasContext.fill();
+        this.canvasContext.stroke();
+        this.canvasContext.closePath();
+      }
+
+      if (currentRadiusPercent >= HALF_EXPANDED_RADIUS) {
+        this.drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent);
+        this.canvasContext.fillStyle = this.topImageFill;
+        this.canvasContext.globalAlpha = Math.max((Math.pow(_.sum(frequencyData) / (frequencyData.length * FREQUENCY_DATA_MAX_VALUE) + 0.5, 4) - 0.5), 0);
+        this.drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent);
+        this.canvasContext.globalAlpha = 1;
+        this.canvasContext.stroke();
+      }
+
+      this.canvasContext.fillStyle = 'white';
+
+      if (currentRadiusPercent >= HALF_EXPANDED_RADIUS / 2) {
+        this.canvasContext.beginPath();
+
+        frequencyData.forEach((dataValue, i) => {
+          const theta1 = PI2 * i / frequencyData.length;
+          const theta2 = PI2 * (i + 1) / frequencyData.length;
+          const radiusPercent = HALF_EXPANDED_RADIUS * (1 + -0.5 * Math.max(dataValue / FREQUENCY_DATA_MAX_VALUE, 2 - currentRadiusPercent / (HALF_EXPANDED_RADIUS / 2)));
+          const radius = Math.floor(radiusPercent * this.canvasSize);
+
+          this.canvasContext.arc(this.canvasCenter, this.canvasCenter, radius, theta1, theta2);
+        });
+
+        this.canvasContext.closePath();
+        this.canvasContext.fill();
+        this.canvasContext.stroke();
+      }
+
+      this.drawButton();
+    }
   }
 
   drawFrequencyData(frequencyData, maxValuePercent, maxAllowedPercent) {

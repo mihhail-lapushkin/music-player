@@ -67,11 +67,13 @@ export const init = () => {
     songIndex = index;
     player.stop();
     positionSlider.setInactive(true);
+    playerUi.setInactive(true);
     loadSong(index, data => {
       player.setSong(data, () => {
         if (songIndex === index) {
           player.play();
           positionSlider.setInactive(false);
+          playerUi.setInactive(false);
         }
       });
     });
@@ -79,13 +81,11 @@ export const init = () => {
 
   loadSong(songIndex, data => {
     player.setSong(data, () => {
-      document.querySelector('#viewport').classList.remove('hidden');
+      document.querySelector('#viewport').classList.remove('loading');
+      playerUi.setInactive(false);
+      playerUi.setSpinner(false);
     });
   });
-
-  setTimeout(() => {
-    document.querySelector('#viewport').classList.add('animate-opacity');
-  }, 100);
 
   frequenciesOrder = shuffle(range(player.getFrequencyData().length));
 

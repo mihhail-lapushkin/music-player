@@ -4,7 +4,7 @@
 @import 'ToggleBarView.css';
 
 #viewport > * {
-  margin-top: 32px;
+  margin-top: var(--control-height);
 }
 
 #viewport > *:first-child {
@@ -15,14 +15,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  opacity: 1;
 }
 
-#viewport.hidden {
+#viewport.loading {
   pointer-events: none;
-  opacity: 0;
-}
-
-#viewport.animate-opacity {
-  transition: opacity var(--swift-enter) var(--control-visible-span);
 }
