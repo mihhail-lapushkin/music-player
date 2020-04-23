@@ -1,8 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "dev": "gulp",
-    "dist": "gulp dist"
+    "dev": "gulp dev",
+    "build": "gulp build"
   },
   "dependencies": {
     "array-range": "1.0.1",
