@@ -1,3 +1,3 @@
 import * as controller from './controller';
 
-controller.init();
+document.addEventListener('DOMContentLoaded', () => controller.init());
