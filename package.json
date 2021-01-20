@@ -8,7 +8,7 @@
     "array-range": "1.0.1",
     "bezier-easing": "2.1.0",
     "eventemitter3": "4.0.0",
-    "gsap": "3.2.6",
+    "gsap": "3.6.0",
     "lodash": "4.17.15",
     "shuffle-array": "1.0.1"
   },
